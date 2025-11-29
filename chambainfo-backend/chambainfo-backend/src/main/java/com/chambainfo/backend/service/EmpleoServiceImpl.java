@@ -24,7 +24,7 @@ public class EmpleoServiceImpl implements EmpleoService {
     /**
      * Publica un nuevo empleo en el sistema.
      *
-     * @param request            Los datos del empleo a publicar.
+     * @param request Los datos del empleo a publicar.
      * @param usuarioAutenticado El nombre de usuario del empleador autenticado.
      * @return Los datos del empleo publicado.
      * @throws RuntimeException Si el usuario no se encuentra.
@@ -45,12 +45,9 @@ public class EmpleoServiceImpl implements EmpleoService {
         empleo.setCelularContacto(request.getCelularContacto());
         empleo.setMostrarNumero(request.getMostrarNumero() != null ? request.getMostrarNumero() : true);
         empleo.setUbicacion(request.getUbicacion());
+        empleo.setSalario(request.getSalario());
         empleo.setRuc(request.getRuc());
         empleo.setAdjuntos(request.getAdjuntos());
-        empleo.setCategoria(request.getCategoria());
-        empleo.setSalarioMonto(request.getSalarioMonto());
-        empleo.setSalarioMoneda(request.getSalarioMoneda());
-        empleo.setSalarioFrecuencia(request.getSalarioFrecuencia());
         empleo.setEmpleador(empleador);
         empleo.setActivo(true);
 
@@ -64,8 +61,7 @@ public class EmpleoServiceImpl implements EmpleoService {
     /**
      * Obtiene todos los empleos activos disponibles en el sistema.
      *
-     * @return Una lista con todos los empleos activos ordenados por fecha de
-     *         publicación descendente.
+     * @return Una lista con todos los empleos activos ordenados por fecha de publicación descendente.
      */
     @Override
     @Transactional(readOnly = true)
@@ -85,8 +81,7 @@ public class EmpleoServiceImpl implements EmpleoService {
      * Obtiene todos los empleos publicados por un empleador específico.
      *
      * @param empleadorId El ID del empleador.
-     * @return Una lista con los empleos del empleador ordenados por fecha de
-     *         publicación descendente.
+     * @return Una lista con los empleos del empleador ordenados por fecha de publicación descendente.
      */
     @Override
     @Transactional(readOnly = true)
@@ -121,13 +116,11 @@ public class EmpleoServiceImpl implements EmpleoService {
     }
 
     /**
-     * Desactiva un empleo publicado (solo el empleador puede desactivar sus propios
-     * empleos).
+     * Desactiva un empleo publicado (solo el empleador puede desactivar sus propios empleos).
      *
-     * @param id                 El ID del empleo a desactivar.
+     * @param id El ID del empleo a desactivar.
      * @param usuarioAutenticado El nombre de usuario del empleador autenticado.
-     * @throws RuntimeException Si el empleo no se encuentra o el usuario no tiene
-     *                          permisos.
+     * @throws RuntimeException Si el empleo no se encuentra o el usuario no tiene permisos.
      */
     @Override
     @Transactional
@@ -162,12 +155,9 @@ public class EmpleoServiceImpl implements EmpleoService {
                 .celularContacto(empleo.getMostrarNumero() ? empleo.getCelularContacto() : "Número oculto")
                 .mostrarNumero(empleo.getMostrarNumero())
                 .ubicacion(empleo.getUbicacion())
+                .salario(empleo.getSalario())
                 .ruc(empleo.getRuc())
                 .adjuntos(empleo.getAdjuntos())
-                .categoria(empleo.getCategoria())
-                .salarioMonto(empleo.getSalarioMonto())
-                .salarioMoneda(empleo.getSalarioMoneda())
-                .salarioFrecuencia(empleo.getSalarioFrecuencia())
                 .empleadorId(empleo.getEmpleador().getId())
                 .empleadorNombre(empleo.getEmpleador().getNombreCompleto())
                 .empleadorUsuario(empleo.getEmpleador().getUsuario())

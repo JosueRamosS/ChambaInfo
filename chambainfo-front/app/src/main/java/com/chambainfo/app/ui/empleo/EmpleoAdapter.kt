@@ -61,12 +61,7 @@ class EmpleoAdapter(
             binding.tvNombreEmpleo.text = empleo.nombreEmpleo
             binding.tvEmpleador.text = empleo.empleadorNombre
             binding.tvFecha.text = calcularTiempoTranscurrido(empleo.fechaPublicacion)
-            
-            // Formatear salario: "S/ 1,500 mensual" o "$ 50 diario"
-            val simboloMoneda = if (empleo.salarioMoneda == "SOLES") "S/" else "$"
-            val montoFormateado = String.format("%,.0f", empleo.salarioMonto)
-            val frecuencia = empleo.salarioFrecuencia.lowercase()
-            binding.tvSalario.text = "$simboloMoneda $montoFormateado $frecuencia"
+            binding.tvSalario.text = empleo.salario ?: "A convenir"
 
             // Color del icono según categoría
             val colorIcono = obtenerColorIcono(empleo.nombreEmpleo)
@@ -101,8 +96,7 @@ class EmpleoAdapter(
                     dias == 1L -> "hace 1 día"
                     dias < 7 -> "hace $dias días"
                     dias < 30 -> "hace ${dias / 7} sem"
-                    dias < 365 -> "hace ${dias / 30} meses"
-                    else -> "hace ${dias / 365} años"
+                    else -> "hace ${dias / 30} meses"
                 }
             } catch (e: Exception) {
                 "reciente"

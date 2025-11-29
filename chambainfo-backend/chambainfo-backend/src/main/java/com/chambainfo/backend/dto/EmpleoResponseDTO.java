@@ -18,13 +18,8 @@ public class EmpleoResponseDTO {
     private String celularContacto;
     private Boolean mostrarNumero;
     private String ubicacion;
+    private String salario;
     private String ruc;
-    private String categoria;
-
-    // Salario estructurado
-    private Double salarioMonto;
-    private String salarioMoneda;
-    private String salarioFrecuencia;
     private String adjuntos;
 
     // Datos del empleador

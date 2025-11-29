@@ -33,25 +33,14 @@ public class Empleo {
     @Column(name = "ubicacion")
     private String ubicacion;
 
+    @Column(name = "salario")
+    private String salario;
+
     @Column(name = "ruc")
     private String ruc;
 
     @Column(name = "adjuntos")
     private String adjuntos; // URLs de archivos separados por comas
-
-    // Categoría del empleo
-    @Column(name = "categoria")
-    private String categoria = "Otros";
-
-    // Salario estructurado
-    @Column(name = "salario_monto", nullable = false)
-    private Double salarioMonto;
-
-    @Column(name = "salario_moneda", nullable = false)
-    private String salarioMoneda; // "SOLES" o "DOLARES"
-
-    @Column(name = "salario_frecuencia", nullable = false)
-    private String salarioFrecuencia; // "DIARIO", "SEMANAL", "QUINCENAL", "MENSUAL"
 
     // Relación con el empleador (Usuario que publicó)
     @ManyToOne(fetch = FetchType.LAZY)
