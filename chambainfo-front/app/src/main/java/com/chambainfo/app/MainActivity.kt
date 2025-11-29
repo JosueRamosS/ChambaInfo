@@ -68,6 +68,32 @@ class MainActivity : AppCompatActivity() {
         empleoViewModel.cargarEmpleos()
     }
 
+    private fun verificarSesion() {
+        lifecycleScope.launch {
+            val token = tokenManager.getToken().first()
+            val userId = tokenManager.getUserId().first()
+            val rol = tokenManager.getRol().first()
+
+            if (token != null && userId != null) {
+                binding.btnPerfil.visibility = View.VISIBLE
+
+                // Cargar notificaciones
+                actualizarBadgeNotificaciones(userId)
+
+                // Mostrar botón publicar solo si es EMPLEADOR
+                if (rol == "EMPLEADOR") {
+                    binding.btnPublicarEmpleo.visibility = View.VISIBLE
+                } else {
+                    binding.btnPublicarEmpleo.visibility = View.GONE
+                }
+            } else {
+                binding.btnPerfil.visibility = View.GONE
+                binding.btnPublicarEmpleo.visibility = View.VISIBLE // Mostrar para incentivar registro
+            }
+        }
+    }
+
+
     private fun verificarRolYRedirigir() {
         lifecycleScope.launch {
             val rol = tokenManager.getRol().first()
@@ -395,6 +421,149 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
+        super.onResume()
+        empleoViewModel.cargarEmpleos()
+        verificarSesion()
+
+        // Actualizar badge si hay usuario logueado
+        lifecycleScope.launch {
+            val userId = tokenManager.getUserId().first()
+            if (userId != null) {
+                actualizarBadgeNotificaciones(userId)
+            }
+        }
+    }
+
+    /**
+     * Muestra un diálogo para seleccionar la categoría de empleos a filtrar.
+     */
+    private fun mostrarDialogoFiltroCategoria() {
+        val categorias = arrayOf(
+            "Todas",
+            "Atención al Cliente",
+            "Construcción",
+            "Cocina y Restaurantes",
+            "Limpieza",
+            "Delivery y Transporte",
+            "Otros"
+        )
+
+        val categoriaActualIndex = categorias.indexOf(categoriaSeleccionada)
+
+        AlertDialog.Builder(this)
+            .setTitle("Filtrar por categoría")
+            .setSingleChoiceItems(categorias, categoriaActualIndex) { dialog, which ->
+                categoriaSeleccionada = categorias[which]
+                binding.btnFiltroCategoria.text = categoriaSeleccionada
+                aplicarFiltrosYOrden()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    /**
+     * Cambia el orden de los empleos entre recientes y antiguos.
+     */
+    private fun cambiarOrden() {
+        ordenActual = if (ordenActual == "Recientes") "Antiguos" else "Recientes"
+        binding.btnOrdenar.text = ordenActual
+
+        // Cambiar el ícono según el orden
+        val iconoRes = if (ordenActual == "Recientes") {
+            R.drawable.ic_sort
+        } else {
+            R.drawable.ic_sort_reverse
+        }
+        binding.btnOrdenar.setIconResource(iconoRes)
+
+        aplicarFiltrosYOrden()
+    }
+
+    /**
+     * Aplica los filtros y el orden seleccionados a los empleos.
+     */
+    private fun aplicarFiltrosYOrden() {
+        var empleosFiltrados = todosLosEmpleos
+
+        // Filtrar por categoría
+        if (categoriaSeleccionada != "Todas") {
+            empleosFiltrados = when (categoriaSeleccionada) {
+                "Atención al Cliente" -> filtrarPorCategoria(empleosFiltrados, listOf(
+                    "cajero", "vendedor", "atencion", "atención", "recepcion", "recepción", "cliente"
+                ))
+                "Construcción" -> filtrarPorCategoria(empleosFiltrados, listOf(
+                    "albañil", "ayudante", "construccion", "construcción", "obrero", "maestro",
+                    "carpintero", "pintor", "electricista", "gasfitero", "soldador"
+                ))
+                "Cocina y Restaurantes" -> filtrarPorCategoria(empleosFiltrados, listOf(
+                    "cocinero", "mesero", "chef", "cocina", "restaurante", "parrillero",
+                    "pizzero", "repostero", "barista", "mozo"
+                ))
+                "Limpieza" -> filtrarPorCategoria(empleosFiltrados, listOf(
+                    "limpieza", "domestico", "doméstico", "empleada", "ama de casa", "niñera"
+                ))
+                "Delivery y Transporte" -> filtrarPorCategoria(empleosFiltrados, listOf(
+                    "delivery", "repartidor", "chofer", "conductor", "motorizado", "transporte"
+                ))
+                "Otros" -> {
+                    val todasLasCategorias = listOf(
+                        "cajero", "vendedor", "atencion", "atención", "recepcion", "recepción", "cliente",
+                        "albañil", "ayudante", "construccion", "construcción", "obrero", "maestro",
+                        "carpintero", "pintor", "electricista", "gasfitero", "soldador",
+                        "cocinero", "mesero", "chef", "cocina", "restaurante", "parrillero",
+                        "pizzero", "repostero", "barista", "mozo",
+                        "limpieza", "domestico", "doméstico", "empleada", "ama de casa", "niñera",
+                        "delivery", "repartidor", "chofer", "conductor", "motorizado", "transporte"
+                    )
+                    empleosFiltrados.filter { empleo ->
+                        val nombre = empleo.nombreEmpleo.lowercase()
+                        todasLasCategorias.none { nombre.contains(it) }
+                    }
+                }
+                else -> empleosFiltrados
+            }
+        }
+
+        // Ordenar por fecha
+        empleosFiltrados = if (ordenActual == "Recientes") {
+            empleosFiltrados.sortedByDescending { it.fechaPublicacion }
+        } else {
+            empleosFiltrados.sortedBy { it.fechaPublicacion }
+        }
+
+        // Mostrar resultados
+        mostrarEmpleosPorCategoria(empleosFiltrados)
+    }
+
+    /**
+     * Filtra empleos por palabras clave de categoría.
+     */
+    private fun filtrarPorCategoria(empleos: List<Empleo>, palabrasClave: List<String>): List<Empleo> {
+        return empleos.filter { empleo ->
+            val nombre = empleo.nombreEmpleo.lowercase()
+            palabrasClave.any { nombre.contains(it) }
+        }
+    }
+
+    /**
+     * Muestra un popup con las notificaciones del usuario.
+     */
+    private fun mostrarPopupNotificaciones() {
+        val popupView = layoutInflater.inflate(R.layout.popup_notificaciones, null)
+        val popupWindow = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+
+        val rvNotificaciones = popupView.findViewById<RecyclerView>(R.id.rvNotificaciones)
+        val tvSinNotificaciones = popupView.findViewById<TextView>(R.id.tvSinNotificaciones)
+        val tvMarcarTodasLeidas = popupView.findViewById<TextView>(R.id.tvMarcarTodasLeidas)
+
+        lifecycleScope.launch {
+            val userId = tokenManager.getUserId().first() ?: return@launch
 
             notificacionManager.obtenerNotificaciones(userId).collect { notificaciones ->
                 if (notificaciones.isEmpty()) {
